@@ -43,7 +43,14 @@ jobs:
         find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
         find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
 
-    # This step injects the required exported property right into the MainActivity declaration
+    # This forces both the main library module and the app module to use the Android 14 SDK
+    - name: Force Android SDK Version 34 Globally
+      run: |
+        find . -name "build.gradle" -exec sed -i 's/compileSdkVersion = .*[0-9]/compileSdkVersion = 34/g' {} +
+        find . -name "build.gradle" -exec sed -i 's/compileSdkVersion .*[0-9]/compileSdkVersion 34/g' {} +
+        find . -name "build.gradle" -exec sed -i 's/targetSdkVersion = .*[0-9]/targetSdkVersion = 34/g' {} +
+        find . -name "build.gradle" -exec sed -i 's/targetSdkVersion .*[0-9]/targetSdkVersion 34/g' {} +
+
     - name: Fix Android Manifest Exported Attribute
       run: |
         MANIFEST_PATH="examples/backgroundExample/android/app/src/main/AndroidManifest.xml"
