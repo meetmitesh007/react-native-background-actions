@@ -30,13 +30,20 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '11' # Roll back to Java 11 for perfect Gradle 6 compatibility
 
-    # Changed from 7.5 to 7.3.3 to fix the React Native auto-linking argument mismatch
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        gradle-version: '7.3.3'
+        gradle-version: '6.9.4' # Use the ultimate stable Gradle 6 release to stop the type mismatch error
+
+    - name: Fix Android Compile SDK Version
+      run: |
+        # Downgrade compileSdkVersion and targetSdkVersion from 34 (Java 17 required) to 33 (Java 11 compatible)
+        sed -i 's/compileSdkVersion = 34/compileSdkVersion = 33/g' examples/backgroundExample/android/build.gradle
+        sed -i 's/targetSdkVersion = 34/targetSdkVersion = 33/g' examples/backgroundExample/android/build.gradle
+        sed -i 's/compileSdkVersion 34/compileSdkVersion 33/g' examples/backgroundExample/android/app/build.gradle
+        sed -i 's/targetSdkVersion 34/targetSdkVersion 33/g' examples/backgroundExample/android/app/build.gradle
 
     - name: Build Android APK
       run: |
