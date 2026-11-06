@@ -32,12 +32,11 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '11' # Changed from 17 to 11 to support your older Gradle version
         cache: 'gradle'
 
     - name: Dynamically Locate and Build Android APK
       run: |
-        # Locate the gradlew file anywhere in the repository automatically
         GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
         
         if [ -z "$GRADLEW_PATH" ]; then
@@ -48,7 +47,6 @@ jobs:
         GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
         echo "Found gradle wrapper at: $GRADLEW_PATH"
         
-        # Grant permissions and run compilation inside the target folder
         chmod +x "$GRADLEW_PATH"
         cd "$GRADLEW_DIR"
         ./gradlew assembleDebug
