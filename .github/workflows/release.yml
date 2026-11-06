@@ -37,12 +37,16 @@ jobs:
       with:
         gradle-version: '7.5'
 
+    - name: Upgrade Legacy Android Gradle Plugin
+      run: |
+        # Automatically swap out any old com.android.tools.build:gradle versions for 7.2.2
+        find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
+        find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
+
     - name: Build Android APK
-      env:
-        # This direct flag turns off strict validation checks across all project tasks and modules
-        GRADLE_OPTS: "-Dorg.gradle.internal.tasks.validation=false"
       run: |
         cd examples/backgroundExample/android
+        # Build app while skipping the incompatible React Native package list generation task
         gradle assembleDebug -x :app:generatePackageList
 
     - name: Find and Upload Final APK Artifact
