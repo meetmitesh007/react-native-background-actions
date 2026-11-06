@@ -18,13 +18,15 @@ jobs:
       with:
         node-version: 18
 
-    - name: Install Root Dependencies
-      run: npm install
-
-    - name: Install Example App Dependencies
+    - name: Install Project Dependencies
       run: |
-        cd Example
-        npm install
+        if [ -f package.json ]; then
+          npm install
+        elif [ -f Example/package.json ]; then
+          cd Example && npm install
+        elif [ -f example/package.json ]; then
+          cd example && npm install
+        fi
 
     - name: Set up JDK
       uses: actions/setup-java@v4
@@ -33,17 +35,27 @@ jobs:
         java-version: '17'
         cache: 'gradle'
 
-    - name: Grant Execute Permission for Gradlew
-      run: chmod +x Example/android/gradlew
-
-    - name: Build Debug APK
+    - name: Dynamically Locate and Build Android APK
       run: |
-        cd Example/android
+        # Locate the gradlew file anywhere in the repository automatically
+        GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
+        
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "Error: Could not find any gradlew wrapper file in this project layout!"
+          exit 1
+        fi
+        
+        GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
+        echo "Found gradle wrapper at: $GRADLEW_PATH"
+        
+        # Grant permissions and run compilation inside the target folder
+        chmod +x "$GRADLEW_PATH"
+        cd "$GRADLEW_DIR"
         ./gradlew assembleDebug
 
-    - name: Upload APK Artifact
+    - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: react-native-apk
-        path: Example/android/app/build/outputs/apk/debug/app-debug.apk
+        name: auto-found-apk
+        path: "**/build/outputs/apk/debug/*.apk"
         
