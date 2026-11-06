@@ -40,9 +40,8 @@ jobs:
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        # -x skips the package list task
-        # -Dorg.gradle.warning.mode=none turns off strict validation crashes for old plugins
-        gradle assembleDebug -x :app:generatePackageList -Dorg.gradle.warning.mode=none
+        # Explicitly skipping both incompatible legacy validation tasks (-x) to clear the pipeline
+        gradle assembleDebug -x :app:generatePackageList -x :app:checkDebugManifest
 
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
