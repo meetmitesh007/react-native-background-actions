@@ -101,11 +101,52 @@ jobs:
           echo "Java source patched flawlessly via Regex matching."
         fi
 
+    # This creates a dummy package list file so MainApplication can compile without running the broken task
+    - name: Generate Static React Native Package List File
+      run: |
+        TARGET_DIR="examples/backgroundExample/android/app/build/generated/rncli/src/main/java/com/facebook/react"
+        mkdir -p "$TARGET_DIR"
+        cat << 'EOF' > "$TARGET_DIR/PackageList.java"
+        package com.facebook.react;
+
+        import android.app.Application;
+        import android.content.Context;
+        import android.content.res.Resources;
+        import com.facebook.react.ReactPackage;
+        import com.facebook.react.shell.MainPackageConfig;
+        import com.facebook.react.shell.MainReactPackage;
+        import java.util.Arrays;
+        import java.util.ArrayList;
+
+        public class PackageList {
+          private Application application;
+          private MainPackageConfig config;
+
+          public PackageList(Application application) {
+            this.application = application;
+          }
+
+          public PackageList(Application application, MainPackageConfig config) {
+            this.application = application;
+            this.config = config;
+          }
+
+          public ArrayList<ReactPackage> getPackages() {
+            return new ArrayList<>(Arrays.<ReactPackage>asList(
+              new MainReactPackage(config),
+              new com.asterinet.react.bgactions.RNBackgroundActionsPackage()
+            ));
+          }
+        }
+        EOF
+        echo "Static PackageList.java successfully generated."
+
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        # REMOVED the -x :app:generatePackageList to allow the package index generation to process safely
+        # Reinstate the -x exclusion switch now that the static class file fulfills the code imports
         gradle assembleDebug \
+          -x :app:generatePackageList \
           -x :app:checkDebugManifest \
           -x :react-native-background-actions:checkDebugManifest
           
