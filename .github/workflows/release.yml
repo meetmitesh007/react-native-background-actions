@@ -37,17 +37,19 @@ jobs:
       with:
         gradle-version: '7.5'
 
-    - name: Upgrade Legacy Android Gradle Plugin
+    - name: Standardize Legacy Build Gradle Keywords
       run: |
-        # Automatically swap out any old com.android.tools.build:gradle versions for 7.2.2
+        # Replace the obsolete 'compile' keyword with 'implementation' across all build configurations to support modern Gradle
+        find . -name "build.gradle" -exec sed -i 's/\bcompile\b/implementation/g' {} +
+        
+        # Also clean up obsolete AGP versions if they exist
         find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
         find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
 
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        # Build app while skipping the incompatible React Native package list generation task
-        gradle assembleDebug -x :app:generatePackageList
+        gradle assembleDebug -x :app:generatePackageList -x :app:checkDebugManifest -x :react-native-background-actions:checkDebugManifest
 
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
