@@ -83,7 +83,6 @@ jobs:
           echo "Successfully injected android:exported property into AndroidManifest.xml"
         fi
 
-    # This Python regex script completely wipes out the problematic onTimeout block regardless of formatting layout
     - name: Patch Mismatched Library Java Source Code
       run: |
         JAVA_FILE="android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java"
@@ -93,7 +92,6 @@ jobs:
         with open('$JAVA_FILE', 'r') as f:
             content = f.read()
         
-        # Matches @Override ... public void onTimeout(...) { ... } ignoring all whitespace variations
         pattern = r'@Override\s+public\s+void\s+onTimeout\s*\([^)]*\)\s*\{[^}]*\}'
         content = re.sub(pattern, '', content)
         
@@ -106,8 +104,8 @@ jobs:
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
+        # REMOVED the -x :app:generatePackageList to allow the package index generation to process safely
         gradle assembleDebug \
-          -x :app:generatePackageList \
           -x :app:checkDebugManifest \
           -x :react-native-background-actions:checkDebugManifest
           
