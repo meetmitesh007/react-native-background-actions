@@ -31,18 +31,18 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
-        cache: 'gradle'
+
+    # This setup step forces GitHub to override your local gradle 6.2 with a pre-installed gradle 7.5 executable
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '7.5'
 
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        chmod +x gradlew
-        
-        # Upgrade Gradle automatically to 7.5 to support Java 17 completely
-        ./gradlew wrapper --gradle-version 7.5
-        
-        # Build the application
-        ./gradlew assembleDebug
+        # Call global gradle instead of local ./gradlew to bypass the old config files completely
+        gradle assembleDebug
 
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
