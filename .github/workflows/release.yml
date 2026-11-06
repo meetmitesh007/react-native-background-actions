@@ -37,17 +37,13 @@ jobs:
       with:
         gradle-version: '7.5'
 
-    - name: Configure Gradle Environment Rules
-      run: |
-        # Inject the disable flag globally into the gradle properties file to stop all legacy annotation check crashes
-        echo "org.gradle.dependency.verification=off" >> examples/backgroundExample/android/gradle.properties
-        echo "org.gradle.unsafe.configuration-cache=false" >> examples/backgroundExample/android/gradle.properties
-
     - name: Build Android APK
+      env:
+        # This direct flag turns off strict validation checks across all project tasks and modules
+        GRADLE_OPTS: "-Dorg.gradle.internal.tasks.validation=false"
       run: |
         cd examples/backgroundExample/android
-        # --disable-task-verification bypasses the annotation validation failure globally for all submodules
-        gradle assembleDebug -x :app:generatePackageList --disable-task-verification
+        gradle assembleDebug -x :app:generatePackageList
 
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
