@@ -30,14 +30,14 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '11' # Roll back to Java 11 for proper legacy library support
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        gradle-version: '7.5'
+        gradle-version: '7.3.3' # Stable gradle for Android 13 compilation
 
-    # This forcefully forces ALL modules (including the sub-library) to compile against SDK 34
+    # Inject a clean rule to enforce API 33 across all sub-modules
     - name: Inject Global Android SDK Rule
       run: |
         cat << 'EOF' >> examples/backgroundExample/android/build.gradle
@@ -45,10 +45,10 @@ jobs:
             afterEvaluate { project ->
                 if (project.hasProperty("android")) {
                     android {
-                        compileSdkVersion 34
-                        buildToolsVersion "34.0.0"
+                        compileSdkVersion 33
+                        buildToolsVersion "33.0.0"
                         defaultConfig {
-                            targetSdkVersion 34
+                            targetSdkVersion 33
                         }
                     }
                 }
@@ -59,8 +59,8 @@ jobs:
     - name: Standardize Legacy Build Gradle Keywords
       run: |
         find . -name "build.gradle" -exec sed -i 's/\bcompile\b/implementation/g' {} +
-        find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
-        find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
+        find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.0.4/g' {} +
+        find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.0.4/g' {} +
 
     - name: Fix Android Manifest Exported Attribute
       run: |
