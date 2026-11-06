@@ -18,8 +18,10 @@ jobs:
       with:
         node-version: 18
 
-    - name: Install Project Dependencies
-      run: npm install --legacy-peer-deps
+    - name: Install Dependencies in App Folder
+      run: |
+        cd examples/backgroundExample
+        npm install --legacy-peer-deps
 
     - name: Set up JDK
       uses: actions/setup-java@v4
@@ -30,19 +32,8 @@ jobs:
 
     - name: Build Android APK
       run: |
-        # Explicitly search for gradlew while ignoring node_modules entirely
-        GRADLEW_PATH=$(find . -not -path '*/node_modules/*' -name "gradlew" | head -n 1)
-        
-        if [ -z "$GRADLEW_PATH" ]; then
-          echo "Error: Could not find gradlew wrapper file!"
-          exit 1
-        fi
-        
-        GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
-        echo "Found main gradle wrapper at: $GRADLEW_PATH"
-        
-        chmod +x "$GRADLEW_PATH"
-        cd "$GRADLEW_DIR"
+        cd examples/backgroundExample/android
+        chmod +x gradlew
         ./gradlew assembleDebug
 
     - name: Find and Upload Final APK Artifact
