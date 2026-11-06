@@ -30,19 +30,20 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17' # Fully supports SDK 34 compilation requirements
+        java-version: '17'
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        gradle-version: '7.5' # Higher version needed for Java 17
+        gradle-version: '7.5'
 
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        # Bypass the failing automatic React Native CLI auto-link task execution directly via -x
-        gradle assembleDebug -x :app:generatePackageList
-        
+        # -x skips the package list task
+        # -Dorg.gradle.warning.mode=none turns off strict validation crashes for old plugins
+        gradle assembleDebug -x :app:generatePackageList -Dorg.gradle.warning.mode=none
+
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
       with:
