@@ -83,30 +83,24 @@ jobs:
           echo "Successfully injected android:exported property into AndroidManifest.xml"
         fi
 
-    # This robust script rewrites the complete java method block safely using python inline execution
+    # This Python regex script completely wipes out the problematic onTimeout block regardless of formatting layout
     - name: Patch Mismatched Library Java Source Code
       run: |
         JAVA_FILE="android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java"
         if [ -f "$JAVA_FILE" ]; then
           python3 -c "
+        import re
         with open('$JAVA_FILE', 'r') as f:
             content = f.read()
         
-        # Completely bypass the broken onTimeout block by commenting it out cleanly
-        broken_method = '''    @Override\n    public void onTimeout(int startId, int fgType) {\n        super.onTimeout(startId, fgType);\n    }'''
-        fixed_method = '''    // Modified via script to prevent signature collision\n    public void onTimeout(int startId) {\n        super.onTimeout(startId);\n    }'''
+        # Matches @Override ... public void onTimeout(...) { ... } ignoring all whitespace variations
+        pattern = r'@Override\s+public\s+void\s+onTimeout\s*\([^)]*\)\s*\{[^}]*\}'
+        content = re.sub(pattern, '', content)
         
-        if broken_method in content:
-            content = content.replace(broken_method, fixed_method)
-        else:
-            # Universal fallback matching rule in case spacing variations exist
-            content = content.replace('super.onTimeout(startId, fgType);', '// super.onTimeout(startId, fgType);')
-            content = content.replace('@Override\n    public void onTimeout', 'public void onTimeout')
-            
         with open('$JAVA_FILE', 'w') as f:
             f.write(content)
         "
-          echo "Java source patched perfectly."
+          echo "Java source patched flawlessly via Regex matching."
         fi
 
     - name: Build Android APK
