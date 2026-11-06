@@ -101,7 +101,7 @@ jobs:
           echo "Java source patched flawlessly via Regex matching."
         fi
 
-    # This creates a dummy package list file so MainApplication can compile without running the broken task
+    # Generates a flexible constructor that cleanly resolves structural package mapping paths
     - name: Generate Static React Native Package List File
       run: |
         TARGET_DIR="examples/backgroundExample/android/app/build/generated/rncli/src/main/java/com/facebook/react"
@@ -111,7 +111,6 @@ jobs:
 
         import android.app.Application;
         import android.content.Context;
-        import android.content.res.Resources;
         import com.facebook.react.ReactPackage;
         import com.facebook.react.shell.MainPackageConfig;
         import com.facebook.react.shell.MainReactPackage;
@@ -122,19 +121,23 @@ jobs:
           private Application application;
           private MainPackageConfig config;
 
-          public PackageList(Application application) {
-            this.application = application;
+          public PackageList(Object context) {
+            if (context instanceof Application) {
+              this.application = (Application) context;
+            } else if (context instanceof Context) {
+              this.application = (Application) ((Context) context).getApplicationContext();
+            }
           }
 
-          public PackageList(Application application, MainPackageConfig config) {
-            this.application = application;
+          public PackageList(Object context, MainPackageConfig config) {
+            this(context);
             this.config = config;
           }
 
           public ArrayList<ReactPackage> getPackages() {
             return new ArrayList<>(Arrays.<ReactPackage>asList(
               new MainReactPackage(config),
-              new com.asterinet.react.bgactions.RNBackgroundActionsPackage()
+              new com.asterinet.react.bgactions.BackgroundActionsPackage()
             ));
           }
         }
@@ -144,7 +147,6 @@ jobs:
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        # Reinstate the -x exclusion switch now that the static class file fulfills the code imports
         gradle assembleDebug \
           -x :app:generatePackageList \
           -x :app:checkDebugManifest \
