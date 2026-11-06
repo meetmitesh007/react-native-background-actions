@@ -39,12 +39,18 @@ jobs:
 
     - name: Standardize Legacy Build Gradle Keywords
       run: |
-        # Replace the obsolete 'compile' keyword with 'implementation' across all build configurations to support modern Gradle
         find . -name "build.gradle" -exec sed -i 's/\bcompile\b/implementation/g' {} +
-        
-        # Also clean up obsolete AGP versions if they exist
         find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
         find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
+
+    # This step injects the required exported property right into the MainActivity declaration
+    - name: Fix Android Manifest Exported Attribute
+      run: |
+        MANIFEST_PATH="examples/backgroundExample/android/app/src/main/AndroidManifest.xml"
+        if [ -f "$MANIFEST_PATH" ]; then
+          sed -i 's/<activity/<activity android:exported="true"/g' "$MANIFEST_PATH"
+          echo "Successfully injected android:exported property into AndroidManifest.xml"
+        fi
 
     - name: Build Android APK
       run: |
