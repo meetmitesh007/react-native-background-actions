@@ -18,10 +18,13 @@ jobs:
       with:
         node-version: 18
 
-    - name: Install Dependencies in App Folder
+    - name: Install Yarn Global
+      run: npm install -g yarn
+
+    - name: Install Dependencies via Yarn
       run: |
         cd examples/backgroundExample
-        npm install --legacy-peer-deps
+        yarn install
 
     - name: Set up JDK
       uses: actions/setup-java@v4
