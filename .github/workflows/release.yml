@@ -19,33 +19,27 @@ jobs:
         node-version: 18
 
     - name: Install Project Dependencies
-      run: |
-        if [ -f package.json ]; then
-          npm install
-        elif [ -f Example/package.json ]; then
-          cd Example && npm install
-        elif [ -f example/package.json ]; then
-          cd example && npm install
-        fi
+      run: npm install --legacy-peer-deps
 
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '11' # Changed from 17 to 11 to support your older Gradle version
+        java-version: '11'
         cache: 'gradle'
 
-    - name: Dynamically Locate and Build Android APK
+    - name: Build Android APK
       run: |
-        GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
+        # Explicitly search for gradlew while ignoring node_modules entirely
+        GRADLEW_PATH=$(find . -not -path '*/node_modules/*' -name "gradlew" | head -n 1)
         
         if [ -z "$GRADLEW_PATH" ]; then
-          echo "Error: Could not find any gradlew wrapper file in this project layout!"
+          echo "Error: Could not find gradlew wrapper file!"
           exit 1
         fi
         
         GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
-        echo "Found gradle wrapper at: $GRADLEW_PATH"
+        echo "Found main gradle wrapper at: $GRADLEW_PATH"
         
         chmod +x "$GRADLEW_PATH"
         cd "$GRADLEW_DIR"
@@ -54,6 +48,6 @@ jobs:
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: auto-found-apk
+        name: react-native-apk
         path: "**/build/outputs/apk/debug/*.apk"
         
