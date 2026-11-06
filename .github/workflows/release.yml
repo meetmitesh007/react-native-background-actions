@@ -30,14 +30,13 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17' # Keep Java 17 for SDK 34 compatibility
+        java-version: '17'
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '7.5'
 
-    # Inject the global SDK 34 rule back to clear the 15 syntax errors
     - name: Inject Global Android SDK Rule
       run: |
         cat << 'EOF' >> examples/backgroundExample/android/build.gradle
@@ -62,7 +61,6 @@ jobs:
         find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
         find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
 
-    # Force configurations to fetch modern core libraries supporting the onTimeout method signatures
     - name: Force Modern AndroidX Support Dependencies
       run: |
         cat << 'EOF' >> examples/backgroundExample/android/build.gradle
@@ -83,6 +81,18 @@ jobs:
         if [ -f "$MANIFEST_PATH" ]; then
           sed -i 's/<activity/<activity android:exported="true"/g' "$MANIFEST_PATH"
           echo "Successfully injected android:exported property into AndroidManifest.xml"
+        fi
+
+    # This patches the broken Java code signature parameters directly before compilation starts
+    - name: Patch Mismatched Library Java Source Code
+      run: |
+        JAVA_FILE="android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java"
+        if [ -f "$JAVA_FILE" ]; then
+          # Remove the broken @Override block above the onTimeout declaration
+          sed -i '/@Override/N;/\n.*public void onTimeout/s/@Override\n//' "$JAVA_FILE"
+          # Comment out the incompatible super call statement within onTimeout
+          sed -i 's/super.onTimeout(startId, fgtype);/\/\/ super.onTimeout(startId, fgtype);/g' "$JAVA_FILE"
+          echo "Patched java source method overrides successfully."
         fi
 
     - name: Build Android APK
