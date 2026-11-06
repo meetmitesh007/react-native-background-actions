@@ -30,15 +30,22 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17' # Upgraded to 17 to fix the Android SDK compilation errors
+        java-version: '17'
         cache: 'gradle'
 
     - name: Build Android APK
+      env:
+        # Force the JVM options globally so the Gradle daemon picks them up immediately
+        GRADLE_OPTS: >-
+          -Dorg.gradle.jvmargs="--add-opens=java.base/java.lang=ALL-UNNAMED
+          --add-opens=java.base/java.io=ALL-UNNAMED
+          --add-opens=java.base/java.util=ALL-UNNAMED
+          --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+          --add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
       run: |
         cd examples/backgroundExample/android
         chmod +x gradlew
-        # Passed JVM arguments to stop the older Gradle reflection crash on Java 17
-        ./gradlew assembleDebug -Dorg.gradle.jvmargs="--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
+        ./gradlew assembleDebug
 
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
