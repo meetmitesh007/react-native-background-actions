@@ -37,6 +37,25 @@ jobs:
       with:
         gradle-version: '7.5'
 
+    # This forcefully forces ALL modules (including the sub-library) to compile against SDK 34
+    - name: Inject Global Android SDK Rule
+      run: |
+        cat << 'EOF' >> examples/backgroundExample/android/build.gradle
+        subprojects {
+            afterEvaluate { project ->
+                if (project.hasProperty("android")) {
+                    android {
+                        compileSdkVersion 34
+                        buildToolsVersion "34.0.0"
+                        defaultConfig {
+                            targetSdkVersion 34
+                        }
+                    }
+                }
+            }
+        }
+        EOF
+
     - name: Standardize Legacy Build Gradle Keywords
       run: |
         find . -name "build.gradle" -exec sed -i 's/\bcompile\b/implementation/g' {} +
@@ -54,10 +73,7 @@ jobs:
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        # Pass the target Android 14 SDK versions directly as safe project properties (-P)
         gradle assembleDebug \
-          -PcompileSdkVersion=34 \
-          -PtargetSdkVersion=34 \
           -x :app:generatePackageList \
           -x :app:checkDebugManifest \
           -x :react-native-background-actions:checkDebugManifest
