@@ -34,17 +34,14 @@ jobs:
         cache: 'gradle'
 
     - name: Build Android APK
-      env:
-        # Force the JVM options globally so the Gradle daemon picks them up immediately
-        GRADLE_OPTS: >-
-          -Dorg.gradle.jvmargs="--add-opens=java.base/java.lang=ALL-UNNAMED
-          --add-opens=java.base/java.io=ALL-UNNAMED
-          --add-opens=java.base/java.util=ALL-UNNAMED
-          --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
-          --add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
       run: |
         cd examples/backgroundExample/android
         chmod +x gradlew
+        
+        # Upgrade Gradle automatically to 7.5 to support Java 17 completely
+        ./gradlew wrapper --gradle-version 7.5
+        
+        # Build the application
         ./gradlew assembleDebug
 
     - name: Find and Upload Final APK Artifact
