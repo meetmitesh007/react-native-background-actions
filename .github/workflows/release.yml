@@ -43,14 +43,6 @@ jobs:
         find examples/backgroundExample/android -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
         find . -maxdepth 2 -name "build.gradle" -exec sed -i 's/com.android.tools.build:gradle:.*[0-9]/com.android.tools.build:gradle:7.2.2/g' {} +
 
-    # This forces both the main library module and the app module to use the Android 14 SDK
-    - name: Force Android SDK Version 34 Globally
-      run: |
-        find . -name "build.gradle" -exec sed -i 's/compileSdkVersion = .*[0-9]/compileSdkVersion = 34/g' {} +
-        find . -name "build.gradle" -exec sed -i 's/compileSdkVersion .*[0-9]/compileSdkVersion 34/g' {} +
-        find . -name "build.gradle" -exec sed -i 's/targetSdkVersion = .*[0-9]/targetSdkVersion = 34/g' {} +
-        find . -name "build.gradle" -exec sed -i 's/targetSdkVersion .*[0-9]/targetSdkVersion 34/g' {} +
-
     - name: Fix Android Manifest Exported Attribute
       run: |
         MANIFEST_PATH="examples/backgroundExample/android/app/src/main/AndroidManifest.xml"
@@ -62,8 +54,14 @@ jobs:
     - name: Build Android APK
       run: |
         cd examples/backgroundExample/android
-        gradle assembleDebug -x :app:generatePackageList -x :app:checkDebugManifest -x :react-native-background-actions:checkDebugManifest
-
+        # Pass the target Android 14 SDK versions directly as safe project properties (-P)
+        gradle assembleDebug \
+          -PcompileSdkVersion=34 \
+          -PtargetSdkVersion=34 \
+          -x :app:generatePackageList \
+          -x :app:checkDebugManifest \
+          -x :react-native-background-actions:checkDebugManifest
+          
     - name: Find and Upload Final APK Artifact
       uses: actions/upload-artifact@v4
       with:
